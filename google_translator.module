@@ -1,0 +1,150 @@
+<?php
+/**
+ * @file
+ */
+
+// Drupal needs this blank file.
+
+/**
+ * Implements hook_menu().
+ */
+function google_translator_menu() {
+  $items = array();
+
+  $items['admin/config/system/google-translate'] = array(
+    'title' => 'Google Translate',
+    'description' => 'Google translate option settings',
+    'access arguments' => array('administer site configuration'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('google_translator_settings_page'),
+    'type' => MENU_NORMAL_ITEM);
+  return $items;
+}
+
+/**
+ * Module configuration settings page.
+ */
+function google_translator_settings_page() {
+  $form = array();
+  $modes = array(
+    '' => t('Vertical'),
+    'HORIZONTAL' => t('Horizontal'),
+    'SIMPLE' => t('Compact')
+    );
+  $form['google_translator_active_languages_display_mode'] = array(
+    '#type' => 'radios',
+    '#title' => t('Display Mode'),
+    '#description' => t('Control whether content defaults to test content or not'),
+    '#options' => $modes,
+    '#default_value' => variable_get('google_translator_active_languages_display_mode', ''),
+    );
+  $header = array(
+    'available_language' => 'Available Languages'
+    );
+  $form['google_translator_active_languages'] = array(
+    '#type' => 'tableselect',
+    '#header' => $header,
+    '#options' => google_translator_get_available_languages(),
+    '#description' => t('Please select Specific languages'),
+    '#multiple' => TRUE,
+    '#default_value' => variable_get('google_translator_active_languages', array()),
+    );
+
+  $form = system_settings_form($form);
+  return $form;
+}
+
+/**
+ * Implements hook_block_info().
+ */
+function google_translator_block_info() {
+  return array(
+    'active_languages' => array(
+      'info' => t('Google Translate block'),
+      'cache' => DRUPAL_NO_CACHE,
+      ),
+    );
+}
+
+function google_translator_block_view($delta = '') {
+  return array(
+    'subject' => t('Google Translate'),
+    'content' => google_translator_get_script(),
+    );
+}
+
+function google_translator_get_script() {
+  $default = '';
+  $active_langages = variable_get('google_translator_active_languages', array());
+  $active_langages = array_flip($active_langages);
+  unset($active_langages[0]);
+  if (!empty($active_langages)) {
+    $display_mode = variable_get('google_translator_active_languages_display_mode', '');
+    $display_mode = !empty($display_mode) ? 'layout: google.translate.TranslateElement.InlineLayout.' . $display_mode : '';
+    $default = "<div id='google_translator_element'></div><script>function googleTranslateElementInit() {
+  new google.translate.TranslateElement({
+    pageLanguage: 'en',
+    includedLanguages: '" . implode(',', array_keys($active_langages)) . "'," . $display_mode . " }, 'google_translator_element');}</script>
+    <script src='//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit'></script>";
+  }
+  return $default;
+}
+
+function google_translator_get_available_languages() {
+  return array(
+    'af' => array('available_language' => 'Afrikaans'),
+    'sq' => array('available_language' => 'Albanian'),
+    'ar' => array('available_language' => 'Arabic'),
+    'be' => array('available_language' => 'Belarusian'),
+    'bg' => array('available_language' => 'Bulgarian'),
+    'ca' => array('available_language' => 'Catalan'),
+    'zh-CN' => array('available_language' => 'Chinese (Simplified)'),
+    'zh-TW' => array('available_language' => 'Chinese (Traditional)'),
+    'hr' => array('available_language' => 'Croatian'),
+    'cs' => array('available_language' => 'Czech'),
+    'da' => array('available_language' => 'Danish'),
+    'nl' => array('available_language' => 'Dutch'),
+    'en' => array('available_language' => 'English'),
+    'eo' => array('available_language' => 'Esperanto'),
+    'et' => array('available_language' => 'Estonian'),
+    'tl' => array('available_language' => 'Filipino'),
+    'fi' => array('available_language' => 'Finnish'),
+    'fr' => array('available_language' => 'French'),
+    'gl' => array('available_language' => 'Galician'),
+    'de' => array('available_language' => 'German'),
+    'el' => array('available_language' => 'Greek'),
+    'ht' => array('available_language' => 'Haitian Creole'),
+    'iw' => array('available_language' => 'Hebrew'),
+    'hi' => array('available_language' => 'Hindi'),
+    'hu' => array('available_language' => 'Hungarian'),
+    'is' => array('available_language' => 'Icelandic'),
+    'id' => array('available_language' => 'Indonesian'),
+    'ga' => array('available_language' => 'Irish'),
+    'it' => array('available_language' => 'Italian'),
+    'ja' => array('available_language' => 'Japanese'),
+    'ko' => array('available_language' => 'Korean'),
+    'lv' => array('available_language' => 'Latvian'),
+    'lt' => array('available_language' => 'Lithuanian'),
+    'mk' => array('available_language' => 'Macedonian'),
+    'ms' => array('available_language' => 'Malay'),
+    'mt' => array('available_language' => 'Maltese'),
+    'no' => array('available_language' => 'Norwegian'),
+    'fa' => array('available_language' => 'Persian'),
+    'pl' => array('available_language' => 'Polish'),
+    'pt' => array('available_language' => 'Portuguese'),
+    'ro' => array('available_language' => 'Romanian'),
+    'ru' => array('available_language' => 'Russian'),
+    'sr' => array('available_language' => 'Serbian'),
+    'sk' => array('available_language' => 'Slovak'),
+    'sl' => array('available_language' => 'Slovenian'),
+    'es' => array('available_language' => 'Spanish'),
+    'sw' => array('available_language' => 'Swahili'),
+    'sv' => array('available_language' => 'Swedish'),
+    'th' => array('available_language' => 'Thai'),
+    'tr' => array('available_language' => 'Turkish'),
+    'uk' => array('available_language' => 'Ukrainian'),
+    'vi' => array('available_language' => 'Vietnamese'),
+    'cy' => array('available_language' => 'Welsh'),
+    'yi' => array('available_language' => 'Yiddish'),
+    );
+}
