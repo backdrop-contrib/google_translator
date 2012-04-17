@@ -1,0 +1,21 @@
+#google-translator-disclaimer {
+  left: 0px;
+  top: 40px;
+  height: 25px;
+  width: 100%;
+  z-index: 10000001;
+  position: fixed;
+  border: none;
+  border-bottom: 1px solid #6B90DA;
+  margin: 0;
+  background-color: #ccc;
+}
+#__dimScreen .message {
+  z-index: 800;
+  width: 50%;
+  top: 25%;
+  left: 25%;
+  padding: 20px;
+  position: absolute;
+  background-color: #FFF
+}

@@ -1,9 +1,4 @@
 <?php
-/**
- * @file
- */
-
-// Drupal needs this blank file.
 
 /**
  * Implements hook_menu().
@@ -38,16 +33,29 @@ function google_translator_settings_page() {
     '#options' => $modes,
     '#default_value' => variable_get('google_translator_active_languages_display_mode', ''),
     );
-  $header = array(
-    'available_language' => 'Available Languages'
-    );
-  $form['google_translator_active_languages'] = array(
+  $form['gt_active_languages'] = array(
+    '#title' => t('Languages configuration. Configure the languages available to your site.'),
+    '#type' => 'fieldset',
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+  );
+
+  $form['gt_active_languages']['google_translator_active_languages'] = array(
     '#type' => 'tableselect',
-    '#header' => $header,
+    '#header' => array(
+      'available_language' => 'Active Languages',
+    ),
     '#options' => google_translator_get_available_languages(),
     '#description' => t('Please select Specific languages'),
     '#multiple' => TRUE,
     '#default_value' => variable_get('google_translator_active_languages', array()),
+    );
+  $form['google_translator_disclaimer'] = array(
+    '#title' => t('Service disclaimer text'),
+    '#type' => 'textarea',
+    '#description' => t('Enter here the service disclaimer text. It will be rendered when the page has been translated.<br \> 
+    Allowed tags: a, em, strong, cite, blockquote, code, ul, ol, li, dl, dt, and dd'),
+    '#default_value' => variable_get('google_translator_disclaimer', ''),
     );
 
   $form = system_settings_form($form);
@@ -60,28 +68,72 @@ function google_translator_settings_page() {
 function google_translator_block_info() {
   return array(
     'active_languages' => array(
-      'info' => t('Google Translate block'),
+      'info' => t('Google Translator language selector'),
       'cache' => DRUPAL_NO_CACHE,
       ),
     );
 }
 
+/**
+ * implements hook_block_view().
+ */
 function google_translator_block_view($delta = '') {
   return array(
-    'subject' => t('Google Translate'),
-    'content' => google_translator_get_script(),
-    );
+    'subject' => '',
+    'content' => array(
+      '#theme' => 'google_translator_language_selector',
+    ),
+  );
 }
 
+/**
+ * implements hook_theme().
+ */
+function google_translator_theme() {
+  return array (
+    'google_translator_language_selector' => array(
+      'render element' => 'element',
+    ),
+  );
+}
+
+/**
+ * returns HTML for the block, and injects CSS and JS
+ */
+function theme_google_translator_language_selector($vars) {
+  //inject the disclaimer to JS
+  $settings = array(
+    'disclaimer' => filter_xss(variable_get('google_translator_disclaimer', '')),
+    'acept_text' =>t('Accept'),
+    'donnot_acept_text' =>t('Do Not Accept'),
+  );
+
+  drupal_add_js(array('google_translator' => $settings), 'setting');
+  drupal_add_js(drupal_get_path('module', 'google_translator') .'/theme/google_translator.js','file');
+  drupal_add_css(drupal_get_path('module', 'google_translator') .'/theme/google_translator.css','file');
+  $items = array();
+  $items[] = "<a href='javascript:void()' class='notranslate google-translator-switch'>translate</a>";
+  $items[] = google_translator_get_script();
+  //return the built language switcher
+  return implode("\n", $items);
+}
+
+
+/**
+ * builds the script from the translator api
+ */
 function google_translator_get_script() {
   $default = '';
   $active_langages = variable_get('google_translator_active_languages', array());
   $active_langages = array_flip($active_langages);
+  $close = "<a href='javascript:void()' class='google-translator-close notranslate'>X</a>";
+  $close = "";
+
   unset($active_langages[0]);
   if (!empty($active_langages)) {
     $display_mode = variable_get('google_translator_active_languages_display_mode', '');
     $display_mode = !empty($display_mode) ? 'layout: google.translate.TranslateElement.InlineLayout.' . $display_mode : '';
-    $default = "<div id='google_translator_element'></div><script>function googleTranslateElementInit() {
+    $default = "<div id='google_translator_element' class='google_translator' style='display: none;'>{$close}</div><script>function googleTranslateElementInit() {
   new google.translate.TranslateElement({
     pageLanguage: 'en',
     includedLanguages: '" . implode(',', array_keys($active_langages)) . "'," . $display_mode . " }, 'google_translator_element');}</script>
