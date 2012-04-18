@@ -21,7 +21,7 @@
     },
     attach : function(context, settings) {
       $(document).ready(function(event) {
-        if( typeof (Drupal.behaviors.google_translator_init.get_cookie('googtrans')) != 'undefined' || Drupal.behaviors.google_translator_init.get_cookie('serv-terms') == 'yes') {
+        if( typeof (Drupal.behaviors.google_translator_init.get_cookie('googtrans')) != 'undefined') {
           $('a.google-translator-switch').hide();
           $('#google_translator_element.google_translator').show();
         }
@@ -45,7 +45,7 @@
 
             //accepted terms
             $('#__dimScreen .message a.accept-terms').click(function(event) {
-              Drupal.behaviors.google_translator_init.set_cookie('serv-terms', 'yes')
+             // Drupal.behaviors.google_translator_init.set_cookie('serv-terms', 'yes')
               $('#__dimScreen').remove();
               $('#google_translator_element.google_translator').show();
               $('a.google-translator-switch').hide();
