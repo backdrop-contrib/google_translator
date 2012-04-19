@@ -16,6 +16,13 @@
   display: inline;
   color:#333;
 }
+#__dimScreen {
+  min-height: 100%;
+}
+#__dimScreen .overlay-wrapper{
+  min-height: 100%;
+}
+
 #__dimScreen .message {
   z-index: 800;
   width: 50%;

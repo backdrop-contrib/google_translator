@@ -37,7 +37,7 @@
             $('<div id="__dimScreen"><div class="overlay-wrapper"></div>').css({
               height : '100%',
               left : '0px',
-              position : 'absolute',
+              position : 'fixed',
               top : '0px',
               width : '100%',
               zIndex : '700'
