@@ -1,4 +1,5 @@
 <?php
+define('GOOGLE_TRANSLATOR_SELECTOR', 'google-translator-switch');
 
 /**
  * Implements hook_menu().
@@ -12,8 +13,36 @@ function google_translator_menu() {
     'access arguments' => array('administer site configuration'),
     'page callback' => 'drupal_get_form',
     'page arguments' => array('google_translator_settings_page'),
-    'type' => MENU_NORMAL_ITEM);
+    'type' => MENU_NORMAL_ITEM
+    );
+  $items['<google-translate>'] = array(
+    'page callback' => 'drupal_not_found',
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+    );
+
   return $items;
+}
+
+function google_translator_preprocess_menu_link(&$vars, $hook) {
+  if ($vars['element']['#href'] =='<google-translate>') {
+    $vars['element']['#href']='javascript:void()';
+    $vars['element']['#attributes']['class'][] = GOOGLE_TRANSLATOR_SELECTOR;
+    $vars['element']['#localized_options']['external'] = TRUE;
+    $vars['element']['#localized_options']['attributes']['class'][] = GOOGLE_TRANSLATOR_SELECTOR;
+     //inject the disclaimer to JS
+    $settings = array(
+      'disclaimer' => filter_xss(variable_get('google_translator_disclaimer', '')),
+      'jquery_selector' => GOOGLE_TRANSLATOR_SELECTOR,
+      'acept_text' =>t('Accept'),
+      'donnot_acept_text' =>t('Do Not Accept'),
+      'gt_script'=> google_translator_get_script(),
+    );
+    drupal_add_js(array('google_translator' => $settings), 'setting');
+    drupal_add_js(drupal_get_path('module', 'google_translator') .'/theme/google_translator.js','file');
+    drupal_add_css(drupal_get_path('module', 'google_translator') .'/theme/google_translator.css','file');
+
+  }
 }
 
 /**
@@ -33,6 +62,7 @@ function google_translator_settings_page() {
     '#options' => $modes,
     '#default_value' => variable_get('google_translator_active_languages_display_mode', ''),
     );
+
   $form['gt_active_languages'] = array(
     '#title' => t('Languages configuration. Configure the languages available to your site.'),
     '#type' => 'fieldset',
@@ -58,9 +88,12 @@ function google_translator_settings_page() {
     '#default_value' => variable_get('google_translator_disclaimer', ''),
     );
 
+  $form['#validate'][] = 'google_translator_settings_validate';
+
   $form = system_settings_form($form);
   return $form;
 }
+
 
 /**
  * Implements hook_block_info().
@@ -104,17 +137,16 @@ function theme_google_translator_language_selector($vars) {
   //inject the disclaimer to JS
   $settings = array(
     'disclaimer' => filter_xss(variable_get('google_translator_disclaimer', '')),
+    'jquery_selector' => GOOGLE_TRANSLATOR_SELECTOR,
     'acept_text' =>t('Accept'),
     'donnot_acept_text' =>t('Do Not Accept'),
   );
-
   drupal_add_js(array('google_translator' => $settings), 'setting');
   drupal_add_js(drupal_get_path('module', 'google_translator') .'/theme/google_translator.js','file');
   drupal_add_css(drupal_get_path('module', 'google_translator') .'/theme/google_translator.css','file');
   $items = array();
-  $items[] = "<a href='javascript:void()' class='notranslate google-translator-switch'>translate</a>";
+  $items[] = "<a href='javascript:void()' class='notranslate " . GOOGLE_TRANSLATOR_SELECTOR . "'>translate</a>";
   $items[] = google_translator_get_script();
-  //return the built language switcher
   return implode("\n", $items);
 }
 
@@ -133,7 +165,7 @@ function google_translator_get_script() {
   if (!empty($active_langages)) {
     $display_mode = variable_get('google_translator_active_languages_display_mode', '');
     $display_mode = !empty($display_mode) ? 'layout: google.translate.TranslateElement.InlineLayout.' . $display_mode : '';
-    $default = "<div id='google_translator_element' class='google_translator' style='display: none;'>{$close}</div><script>function googleTranslateElementInit() {
+    $default = "<span id='google_translator_element' class='google_translator'>{$close}</span><script>function googleTranslateElementInit() {
   new google.translate.TranslateElement({
     pageLanguage: 'en',
     includedLanguages: '" . implode(',', array_keys($active_langages)) . "'," . $display_mode . " }, 'google_translator_element');}</script>
@@ -141,6 +173,15 @@ function google_translator_get_script() {
   }
   return $default;
 }
+
+function google_translator_get_selector_array($switch_menu_link) {
+  $switch_menu_link = explode('|', $switch_menu_link);
+  return array(
+    'menu_name' => $switch_menu_link[0],
+    'position' => (count($switch_menu_link) > 1 ? str_replace('first', '1', $switch_menu_link[1]) : '1'),
+    );
+}
+
 
 function google_translator_get_available_languages() {
   return array(

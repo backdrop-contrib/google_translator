@@ -10,6 +10,12 @@
   margin: 0;
   background-color: #ccc;
 }
+#block-menu-menu-utility #google_translator_element a,
+#block-menu-menu-utility #google_translator_element span,
+#google_translator_element  div{
+  display: inline;
+  color:#333;
+}
 #__dimScreen .message {
   z-index: 800;
   width: 50%;
