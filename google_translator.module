@@ -174,14 +174,6 @@ function google_translator_get_script() {
   return $default;
 }
 
-function google_translator_get_selector_array($switch_menu_link) {
-  $switch_menu_link = explode('|', $switch_menu_link);
-  return array(
-    'menu_name' => $switch_menu_link[0],
-    'position' => (count($switch_menu_link) > 1 ? str_replace('first', '1', $switch_menu_link[1]) : '1'),
-    );
-}
-
 
 function google_translator_get_available_languages() {
   return array(
