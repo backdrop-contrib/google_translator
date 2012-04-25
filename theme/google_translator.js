@@ -23,7 +23,6 @@
       $(document).ready(function(event) {
         //builds the jQuery selector for the configured link
         var menu_link_selector = $('li a.'+settings.google_translator.jquery_selector);
-
         if (typeof (Drupal.behaviors.google_translator_init.get_cookie('googtrans')) != 'undefined' ) {
           $(menu_link_selector).hide().after(settings.google_translator.gt_script);
           //$('#google_translator_element.google_translator').show();
@@ -33,8 +32,8 @@
           if($('#__dimScreen').length == 0) {
             acept = '<a href=javascript:void() class="accept-terms">' + settings.google_translator.acept_text + '</a>';
             cancel = '<a href=javascript:void() class="do-not-accept-terms">' + settings.google_translator.donnot_acept_text + '</a>';
-            message = '<div class="message">' + settings.google_translator.disclaimer + '<div>' + acept + ' ' + cancel + '</div></div></div>';
-            $('<div id="__dimScreen"><div class="overlay-wrapper"></div>').css({
+            message = '<div class="message">' + settings.google_translator.disclaimer + '<div>' + acept + ' ' + cancel + '</div></div>';
+            $('<div id="__dimScreen"><div class="overlay-wrapper"></div></div>').css({
               height : '100%',
               left : '0px',
               position : 'fixed',
@@ -42,6 +41,8 @@
               width : '100%',
               zIndex : '700'
             }).appendTo(document.body);
+
+            $(document.body).css("background-color", '#ccc');
 
             //attach message text
             $('#__dimScreen .overlay-wrapper').after(message);
@@ -68,8 +69,7 @@
               top : '0px',
               width : '100%',
               zIndex : '760'
-            }).fadeTo(100, 0.75, function(event) {
-            });
+            }).fadeTo(100, 0.75, function(event) { });
           }
         });
       });

@@ -36,10 +36,10 @@ function google_translator_preprocess_menu_link(&$vars, $hook) {
       'jquery_selector' => GOOGLE_TRANSLATOR_SELECTOR,
       'acept_text' =>t('Accept'),
       'donnot_acept_text' =>t('Do Not Accept'),
-      'gt_script'=> google_translator_get_script(),
+      'gt_script'=> google_translator_get_script()
     );
     drupal_add_js(array('google_translator' => $settings), 'setting');
-    drupal_add_js(drupal_get_path('module', 'google_translator') .'/theme/google_translator.js','file');
+    drupal_add_js(drupal_get_path('module', 'google_translator') .'/theme/google_translator.js','file', array('defer'=>TRUE));
     drupal_add_css(drupal_get_path('module', 'google_translator') .'/theme/google_translator.css','file');
 
   }
@@ -138,7 +138,7 @@ function theme_google_translator_language_selector($vars) {
     'disclaimer' => filter_xss(variable_get('google_translator_disclaimer', '')),
     'jquery_selector' => GOOGLE_TRANSLATOR_SELECTOR,
     'acept_text' =>t('Accept'),
-    'donnot_acept_text' =>t('Do Not Accept'),
+    'donnot_acept_text' =>t('Do Not Accept')
   );
   drupal_add_js(array('google_translator' => $settings), 'setting');
   drupal_add_js(drupal_get_path('module', 'google_translator') .'/theme/google_translator.js','file');
