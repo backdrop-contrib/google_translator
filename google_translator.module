@@ -88,7 +88,6 @@ function google_translator_settings_page() {
     '#default_value' => variable_get('google_translator_disclaimer', ''),
     );
 
-  $form['#validate'][] = 'google_translator_settings_validate';
 
   $form = system_settings_form($form);
   return $form;
