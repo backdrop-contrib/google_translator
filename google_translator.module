@@ -26,7 +26,7 @@ function google_translator_menu() {
 
 function google_translator_preprocess_menu_link(&$vars, $hook) {
   if ($vars['element']['#href'] =='<google-translate>') {
-    $vars['element']['#href']='javascript:void()';
+    $vars['element']['#href']='#';
     $vars['element']['#attributes']['class'][] = GOOGLE_TRANSLATOR_SELECTOR;
     $vars['element']['#localized_options']['external'] = TRUE;
     $vars['element']['#localized_options']['attributes']['class'][] = GOOGLE_TRANSLATOR_SELECTOR;
@@ -144,7 +144,7 @@ function theme_google_translator_language_selector($vars) {
   drupal_add_js(drupal_get_path('module', 'google_translator') .'/theme/google_translator.js','file');
   drupal_add_css(drupal_get_path('module', 'google_translator') .'/theme/google_translator.css','file');
   $items = array();
-  $items[] = "<a href='javascript:void()' class='notranslate " . GOOGLE_TRANSLATOR_SELECTOR . "'>translate</a>";
+  $items[] = "<a href='#' class='notranslate " . GOOGLE_TRANSLATOR_SELECTOR . "'>translate</a>";
   $items[] = google_translator_get_script();
   return implode("\n", $items);
 }
@@ -157,7 +157,7 @@ function google_translator_get_script() {
   $default = '';
   $active_langages = variable_get('google_translator_active_languages', array());
   $active_langages = array_flip($active_langages);
-  $close = "<a href='javascript:void()' class='google-translator-close notranslate'>X</a>";
+  $close = "<a href='#' class='google-translator-close notranslate'>X</a>";
   $close = "";
 
   unset($active_langages[0]);

@@ -30,8 +30,8 @@
 
         $(menu_link_selector).click(function(event) {
           if($('#__dimScreen').length == 0) {
-            acept = '<a href=javascript:void() class="accept-terms">' + settings.google_translator.acept_text + '</a>';
-            cancel = '<a href=javascript:void() class="do-not-accept-terms">' + settings.google_translator.donnot_acept_text + '</a>';
+            acept = '<a href="#" class="accept-terms">' + settings.google_translator.acept_text + '</a>';
+            cancel = '<a href="#" class="do-not-accept-terms">' + settings.google_translator.donnot_acept_text + '</a>';
             message = '<div class="message">' + settings.google_translator.disclaimer + '<div>' + acept + ' ' + cancel + '</div></div>';
             $('<div id="__dimScreen"><div class="overlay-wrapper"></div></div>').css({
               height : '100%',
