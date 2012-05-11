@@ -24,52 +24,61 @@
         //builds the jQuery selector for the configured link
         var menu_link_selector = $('li a.'+settings.google_translator.jquery_selector);
         if (typeof (Drupal.behaviors.google_translator_init.get_cookie('googtrans')) != 'undefined' ) {
-          $(menu_link_selector).hide().after(settings.google_translator.gt_script);
-          //$('#google_translator_element.google_translator').show();
+          menu_link_selector.hide().after(settings.google_translator.gt_script);
         }
 
-        $(menu_link_selector).click(function(event) {
-          if($('#__dimScreen').length == 0) {
-            acept = '<a href="#" class="accept-terms">' + settings.google_translator.acept_text + '</a>';
-            cancel = '<a href="#" class="do-not-accept-terms">' + settings.google_translator.donnot_acept_text + '</a>';
-            message = '<div class="message">' + settings.google_translator.disclaimer + '<div>' + acept + ' ' + cancel + '</div></div>';
-            $('<div id="__dimScreen"><div class="overlay-wrapper"></div></div>').css({
-              height : '100%',
-              left : '0px',
-              position : 'fixed',
-              top : '0px',
-              width : '100%',
-              zIndex : '700'
-            }).appendTo(document.body);
+        menu_link_selector.click(function(event) {
+          if (settings.google_translator.disclaimer.trim().length>0) {
+            if($('#__dimScreen').length == 0) {
+              acept = '<a href="#" class="accept-terms">' + settings.google_translator.acept_text + '</a>';
+              cancel = '<a href="#" class="do-not-accept-terms">' + settings.google_translator.donnot_acept_text + '</a>';
+              message = '<div class="message">' + settings.google_translator.disclaimer + '<div>' + acept + ' ' + cancel + '</div></div>';
+              $('<div id="__dimScreen"><div class="overlay-wrapper"></div></div>').css({
+                height : '100%',
+                left : '0px',
+                position : 'fixed',
+                top : '0px',
+                width : '100%',
+                zIndex : '700'
+              }).appendTo(document.body);
 
-            $(document.body).css("background-color", '#ccc');
+              $(document.body).css("background-color", '#ccc');
 
-            //attach message text
-            $('#__dimScreen .overlay-wrapper').after(message);
+              //attach message text
+              $('#__dimScreen .overlay-wrapper').after(message);
 
-            //accepted terms
-            $('#__dimScreen .message a.accept-terms').click(function(event) {
-             // Drupal.behaviors.google_translator_init.set_cookie('serv-terms', 'yes')
-              $('#__dimScreen').remove();
-              //$('#google_translator_element.google_translator').show();
-              $(menu_link_selector).hide().after(settings.google_translator.gt_script);
+              //accepted terms
+              $('#__dimScreen .message a.accept-terms').click(function(event) {
+                $('#__dimScreen').remove();
+                menu_link_selector.hide().after(settings.google_translator.gt_script);
+              });
 
-            });
-            //did not accepted terms
-            $('#__dimScreen .message a.do-not-accept-terms').click(function(event) {
-              $('#__dimScreen').remove();
-            });
+              //attach esc key to cancel action terms action
+              $(document).keyup(function(e) {
+                if (e.keyCode == 27) {
+                  $('#__dimScreen').remove();
+                }
+              });
+              //Cancel, did not accepted terms
+              $('#__dimScreen .message a.do-not-accept-terms').click(function(event) {
+                $('#__dimScreen').remove();
+              });
 
-            $('#__dimScreen .overlay-wrapper').css({
-              background : '#000',
-              height : '100%',
-              left : '0px',
-              opacity : '0',
-              position : 'absolute',
-              top : '0px',
-              width : '100%',
-              zIndex : '760'
-            }).fadeTo(100, 0.75, function(event) { });
+              $('#__dimScreen .overlay-wrapper').css({
+                background : '#000',
+                height : '100%',
+                left : '0px',
+                opacity : '0',
+                position : 'absolute',
+                top : '0px',
+                width : '100%',
+                zIndex : '760'
+              }).fadeTo(100, 0.75, function(event) { });
+            }
+          }// we have a disclaimer
+          else {
+            menu_link_selector.after(settings.google_translator.gt_script);
+            menu_link_selector.hide();
           }
         });
       });
