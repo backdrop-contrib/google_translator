@@ -1,4 +1,5 @@
 name = Google Translator
 description = Provides a block with configurable languages to translate the current page into
 core = 7.x
+dependencies[] = libraries
 project = "google_translator"

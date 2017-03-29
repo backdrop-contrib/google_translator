@@ -47,21 +47,33 @@
               //attach message text
               $('#__dimScreen .overlay-wrapper').after(message);
 
+              // Focus on accept link when modal appears.
+              $('#__dimScreen .message a.accept-terms').focus();
+
               //accepted terms
               $('#__dimScreen .message a.accept-terms').click(function(event) {
                 $('#__dimScreen').remove();
                 menu_link_selector.hide().after(settings.google_translator.gt_script);
+                $('.goog-te-gadget').DOMNodeAppear(function() {
+                  setTimeout(function() {
+                    // Focus on the gadget.
+                    $('a.goog-te-menu-value').focus();
+                  },500);
+                });
               });
 
               //attach esc key to cancel action terms action
               $(document).keyup(function(e) {
                 if (e.keyCode == 27) {
                   $('#__dimScreen').remove();
+                  menu_link_selector.focus();
                 }
               });
               //Cancel, did not accepted terms
               $('#__dimScreen .message a.do-not-accept-terms').click(function(event) {
                 $('#__dimScreen').remove();
+                // Plant the focus back where we left it.
+                menu_link_selector.focus();
               });
 
               $('#__dimScreen .overlay-wrapper').css({

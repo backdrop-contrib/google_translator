@@ -39,6 +39,7 @@ function google_translator_preprocess_menu_link(&$vars, $hook) {
       'gt_script'=> google_translator_get_script()
     );
     drupal_add_js(array('google_translator' => $settings), 'setting');
+    drupal_add_js(libraries_get_path('jquery.domnodeappear') . '/jquery.domnodeappear.js', array('group' => JS_LIBRARY));
     drupal_add_js(drupal_get_path('module', 'google_translator') .'/theme/google_translator.js','file', array('defer'=>TRUE));
     drupal_add_css(drupal_get_path('module', 'google_translator') .'/theme/google_translator.css','file');
 
