@@ -3,3 +3,4 @@ description = Provides a block with configurable languages to translate the curr
 core = 7.x
 dependencies[] = libraries
 project = "google_translator"
+configure = admin/config/system/google-translate
