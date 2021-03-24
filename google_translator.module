@@ -209,6 +209,7 @@ function google_translator_get_available_languages() {
     'ga' => array('available_language' => 'Irish'),
     'it' => array('available_language' => 'Italian'),
     'ja' => array('available_language' => 'Japanese'),
+    'km' => array('available_language' => 'Khmer'),
     'ko' => array('available_language' => 'Korean'),
     'lv' => array('available_language' => 'Latvian'),
     'lt' => array('available_language' => 'Lithuanian'),
