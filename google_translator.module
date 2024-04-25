@@ -1,5 +1,11 @@
 <?php
-define('GOOGLE_TRANSLATOR_SELECTOR', 'google-translator-switch');
+
+/**
+ * @file
+ */
+
+define('GOOGLE_TRANSLATOR_DISCLAIMER_CLASS', 'google-translator-switch');
+define('GOOGLE_TRANSLATOR_ELEMENT_ID', 'google_translator_element');
 
 /**
  * Implements hook_menu().
@@ -7,16 +13,16 @@ define('GOOGLE_TRANSLATOR_SELECTOR', 'google-translator-switch');
 function google_translator_menu() {
   $items = array();
 
-  $items['admin/config/system/google-translate'] = array(
-    'title' => 'Google Translate',
-    'description' => 'Google translate option settings',
+  $items['admin/config/regional/google-translate'] = array(
+    'title' => t('Google Translate'),
+    'description' => t('Google translate option settings'),
     'access arguments' => array('administer site configuration'),
-    'page callback' => 'drupal_get_form',
+    'page callback' => 'backdrop_get_form',
     'page arguments' => array('google_translator_settings_page'),
     'type' => MENU_NORMAL_ITEM,
   );
   $items['<google-translate>'] = array(
-    'page callback' => 'drupal_not_found',
+    'page callback' => 'backdrop_not_found',
     'access callback' => TRUE,
     'type' => MENU_CALLBACK,
   );
@@ -30,22 +36,10 @@ function google_translator_menu() {
 function google_translator_preprocess_menu_link(&$vars, $hook) {
   if ($vars['element']['#href'] == '<google-translate>') {
     $vars['element']['#href'] = '#';
-    $vars['element']['#attributes']['class'][] = GOOGLE_TRANSLATOR_SELECTOR;
+    $vars['element']['#attributes']['class'][] = GOOGLE_TRANSLATOR_DISCLAIMER_CLASS;
     $vars['element']['#localized_options']['external'] = TRUE;
-    $vars['element']['#localized_options']['attributes']['class'][] = GOOGLE_TRANSLATOR_SELECTOR;
-    // Inject the disclaimer to JS.
-    $settings = array(
-      'disclaimer' => filter_xss(variable_get('google_translator_disclaimer', '')),
-      'jquery_selector' => GOOGLE_TRANSLATOR_SELECTOR,
-      'acept_text' => t('Accept'),
-      'donnot_acept_text' => t('Do Not Accept'),
-      'gt_script' => google_translator_get_script(),
-    );
-    drupal_add_js(array('google_translator' => $settings), 'setting');
-    drupal_add_js(libraries_get_path('jquery.domnodeappear') . '/jquery.domnodeappear.js', array('group' => JS_LIBRARY));
-    drupal_add_js(drupal_get_path('module', 'google_translator') . '/theme/google_translator.js', 'file', array('defer' => TRUE));
-    drupal_add_css(drupal_get_path('module', 'google_translator') . '/theme/google_translator.css', 'file');
-
+    $vars['element']['#localized_options']['attributes']['class'][] = GOOGLE_TRANSLATOR_DISCLAIMER_CLASS;
+    _google_translator_build();
   }
 }
 
@@ -53,44 +47,70 @@ function google_translator_preprocess_menu_link(&$vars, $hook) {
  * Module configuration settings page.
  */
 function google_translator_settings_page() {
-  $form = array();
+  $config = config('google_translator.settings');
+  $form['#config'] = 'google_translator.settings';
   $modes = array(
-    '' => t('Vertical'),
+    'SIMPLE' => t('Simple'),
     'HORIZONTAL' => t('Horizontal'),
-    'SIMPLE' => t('Compact'),
+    'VERTICAL' => t('Vertical'),
   );
-  $form['google_translator_active_languages_display_mode'] = array(
+  $form['active_languages_display_mode'] = array(
     '#type' => 'radios',
     '#title' => t('Display Mode'),
-    '#description' => t('Control whether content defaults to test content or not'),
+    '#description' => t('Simple is the most compact setting.<br>Horizontal will display "Powered by Google" text next to the language selector.<br>Vertical will display "Powered by Google" text beneath the language selector.'),
     '#options' => $modes,
-    '#default_value' => variable_get('google_translator_active_languages_display_mode', ''),
+    '#default_value' => $config->get('active_languages_display_mode'),
   );
 
   $form['gt_active_languages'] = array(
-    '#title' => t('Languages configuration. Configure the languages available to your site.'),
-    '#type' => 'fieldset',
-    '#collapsible' => TRUE,
-    '#collapsed' => TRUE,
+    '#type' => 'details',
+    '#summary' => t('Languages configuration. Configure the languages available to your site.'),
+    '#open' => FALSE,
   );
 
-  $form['gt_active_languages']['google_translator_active_languages'] = array(
-    '#type' => 'tableselect',
-    '#header' => array(
-      'available_language' => 'Active Languages',
-    ),
+  $form['gt_active_languages']['active_languages'] = array(
+    '#type' => 'checkboxes',
+    '#title' => t('Available Languages'),
     '#options' => google_translator_get_available_languages(),
-    '#description' => t('Please select Specific languages'),
-    '#multiple' => TRUE,
-    '#default_value' => variable_get('google_translator_active_languages', array()),
+    '#description' => t('Please select specific languages.'),
+    '#default_value' => $config->get('active_languages'),
   );
-  $form['google_translator_disclaimer'] = array(
-    '#title' => t('Service disclaimer text'),
+  $form['disclaimer'] = array(
+    '#type' => 'details',
+    '#summary' => t('Service disclaimer (optional)'),
+    '#open' => TRUE,
+  );
+  $form['disclaimer']['add_disclaimer'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Add service disclaimer'),
+    '#description' => t('Optionally require users to accept a disclaimer (in a popup modal on click) before allowing translation. '),
+    '#default_value' => $config->get('add_disclaimer'),
+  );
+  $form['disclaimer']['disclaimer_title'] = array(
+    '#title' => t('Service disclaimer title'),
+    '#type' => 'textfield',
+    '#description' => t('Title for the modal.'),
+    '#default_value' => $config->get('disclaimer_title'),
+    '#states' => array(
+      'visible' => array(
+        ':input[name="add_disclaimer"]' => array('checked' => TRUE),
+      ),
+    ),
+  );
+  $form['disclaimer']['disclaimer_text'] = array('#title' => t('Service disclaimer text'),
     '#type' => 'textarea',
-    '#description' => t('Enter here the service disclaimer text. It will be rendered when the page has been translated.<br \> 
-    Allowed tags: a, em, strong, cite, blockquote, code, ul, ol, li, dl, dt, and dd'),
-    '#default_value' => variable_get('google_translator_disclaimer', ''),
+    '#description' => t('Enter the text of the disclaimer here.<br>
+    Allowed tags: @tags', [
+      '@tags' => implode(', ', _filter_xss_allowed_tags()),
+    ]),
+    '#default_value' => $config->get('disclaimer_text'),
+    '#states' => array(
+      'visible' => array(
+        ':input[name="add_disclaimer"]' => array('checked' => TRUE),
+      ),
+    ),
   );
+  $form['#attached']['css'][] = backdrop_get_path('module', 'google_translator') . '/css/settings_form.css';
 
   $form = system_settings_form($form);
   return $form;
@@ -104,7 +124,7 @@ function google_translator_block_info() {
   return array(
     'active_languages' => array(
       'info' => t('Google Translator language selector'),
-      'cache' => DRUPAL_NO_CACHE,
+      'cache' => BACKDROP_NO_CACHE,
     ),
   );
 }
@@ -136,103 +156,212 @@ function google_translator_theme() {
  * returns HTML for the block, and injects CSS and JS
  */
 function theme_google_translator_language_selector($vars) {
-  // Inject the disclaimer to JS.
-  $settings = array(
-    'disclaimer' => filter_xss(variable_get('google_translator_disclaimer', '')),
-    'jquery_selector' => GOOGLE_TRANSLATOR_SELECTOR,
-    'acept_text' => t('Accept'),
-    'donnot_acept_text' => t('Do Not Accept'),
-  );
-  drupal_add_js(array('google_translator' => $settings), 'setting');
-  drupal_add_js(drupal_get_path('module', 'google_translator') . '/theme/google_translator.js', 'file');
-  drupal_add_css(drupal_get_path('module', 'google_translator') . '/theme/google_translator.css', 'file');
+  _google_translator_build();
+  $link_attributes = array('class' => array(GOOGLE_TRANSLATOR_DISCLAIMER_CLASS, 'notranslate'));
   $items = array();
-  $items[] = "<a href='#' class='notranslate " . GOOGLE_TRANSLATOR_SELECTOR . "'>translate</a>";
-  $items[] = google_translator_get_script();
+  if (config_get('google_translator.settings', 'add_disclaimer')) {
+    $items[] = l(t('Translate this page'), '#', array('attributes' => $link_attributes));
+  }
+  else {
+    // No disclaimer needed. Add the script directly.
+    $items[] = google_translator_get_script();;
+  }
   return implode("\n", $items);
 }
 
 
 /**
- * builds the script from the translator api
+ * Builds the script from the translator API.
  */
 function google_translator_get_script() {
+  backdrop_add_library('system', 'backdrop.dialog.ajax');
+  $config = config('google_translator.settings');
   $default = '';
-  $active_langages = variable_get('google_translator_active_languages', array());
-  $active_langages = array_flip($active_langages);
-  $close = "<a href='#' class='google-translator-close notranslate'>X</a>";
-  $close = "";
+  $active_languages = google_translator_get_active_languages();
 
-  unset($active_langages[0]);
-  if (!empty($active_langages)) {
-    $display_mode = variable_get('google_translator_active_languages_display_mode', '');
-    $display_mode = !empty($display_mode) ? 'layout: google.translate.TranslateElement.InlineLayout.' . $display_mode : '';
-    $default = "<span id='google_translator_element' class='google_translator'>{$close}</span><script>function googleTranslateElementInit() {
-  new google.translate.TranslateElement({
-    pageLanguage: 'en',
-    includedLanguages: '" . implode(',', array_keys($active_langages)) . "'," . $display_mode . " }, 'google_translator_element');}</script>
-    <script src='//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit'></script>";
+  if (!empty($active_languages)) {
+    // Build the render array that will print the Google Translate widget.
+    $callback = 'Backdrop.behaviors.googleTranslatorElement.init';
+    $default .= '<span id="' . GOOGLE_TRANSLATOR_ELEMENT_ID . '"></span>';
+    $default .= '<script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=' . $callback . '"></script>';
+  }
+  else {
+    watchdog('google_translator', t('Specify some languages in the <a href=":url">Google Translator settings</a> to enable translation.', [
+      ':url' => '/admin/config/regional/google-translator',
+    ]));
+    $default = t('No languages available for translation.');
   }
   return $default;
 }
 
-
-function google_translator_get_available_languages() {
-  return array(
-    'af' => array('available_language' => 'Afrikaans'),
-    'sq' => array('available_language' => 'Albanian'),
-    'ar' => array('available_language' => 'Arabic'),
-    'be' => array('available_language' => 'Belarusian'),
-    'bg' => array('available_language' => 'Bulgarian'),
-    'ca' => array('available_language' => 'Catalan'),
-    'zh-CN' => array('available_language' => 'Chinese (Simplified)'),
-    'zh-TW' => array('available_language' => 'Chinese (Traditional)'),
-    'hr' => array('available_language' => 'Croatian'),
-    'cs' => array('available_language' => 'Czech'),
-    'da' => array('available_language' => 'Danish'),
-    'nl' => array('available_language' => 'Dutch'),
-    'en' => array('available_language' => 'English'),
-    'eo' => array('available_language' => 'Esperanto'),
-    'et' => array('available_language' => 'Estonian'),
-    'tl' => array('available_language' => 'Filipino'),
-    'fi' => array('available_language' => 'Finnish'),
-    'fr' => array('available_language' => 'French'),
-    'gl' => array('available_language' => 'Galician'),
-    'de' => array('available_language' => 'German'),
-    'el' => array('available_language' => 'Greek'),
-    'ht' => array('available_language' => 'Haitian Creole'),
-    'iw' => array('available_language' => 'Hebrew'),
-    'hi' => array('available_language' => 'Hindi'),
-    'hu' => array('available_language' => 'Hungarian'),
-    'is' => array('available_language' => 'Icelandic'),
-    'id' => array('available_language' => 'Indonesian'),
-    'ga' => array('available_language' => 'Irish'),
-    'it' => array('available_language' => 'Italian'),
-    'ja' => array('available_language' => 'Japanese'),
-    'km' => array('available_language' => 'Khmer'),
-    'ko' => array('available_language' => 'Korean'),
-    'lv' => array('available_language' => 'Latvian'),
-    'lt' => array('available_language' => 'Lithuanian'),
-    'mk' => array('available_language' => 'Macedonian'),
-    'ms' => array('available_language' => 'Malay'),
-    'mt' => array('available_language' => 'Maltese'),
-    'no' => array('available_language' => 'Norwegian'),
-    'fa' => array('available_language' => 'Persian'),
-    'pl' => array('available_language' => 'Polish'),
-    'pt' => array('available_language' => 'Portuguese'),
-    'ro' => array('available_language' => 'Romanian'),
-    'ru' => array('available_language' => 'Russian'),
-    'sr' => array('available_language' => 'Serbian'),
-    'sk' => array('available_language' => 'Slovak'),
-    'sl' => array('available_language' => 'Slovenian'),
-    'es' => array('available_language' => 'Spanish'),
-    'sw' => array('available_language' => 'Swahili'),
-    'sv' => array('available_language' => 'Swedish'),
-    'th' => array('available_language' => 'Thai'),
-    'tr' => array('available_language' => 'Turkish'),
-    'uk' => array('available_language' => 'Ukrainian'),
-    'vi' => array('available_language' => 'Vietnamese'),
-    'cy' => array('available_language' => 'Welsh'),
-    'yi' => array('available_language' => 'Yiddish'),
+/**
+ * Build the Google translator.
+ */
+function _google_translator_build() {
+  global $language;
+  $config = config('google_translator.settings');
+  $langcode = $language->langcode;
+  $display_mode = $config->get('active_languages_display_mode');
+  $active_languages = google_translator_get_active_languages();
+  $settings = array(
+    'googleTranslatorDisclaimer' => array(
+      'addDisclaimer' => $config->get('add_disclaimer'),
+      'disclaimerText' => filter_xss($config->get('disclaimer_text')),
+      'disclaimerTitle' => filter_xss($config->get('disclaimer_title')),
+      'selector' => '.' . GOOGLE_TRANSLATOR_DISCLAIMER_CLASS,
+      'acceptText' => t('Accept'),
+      'dontAcceptText' => t('Do Not Accept'),
+      'element' => google_translator_get_script(),
+    ),
+    'googleTranslatorElement' => [
+      'id' => GOOGLE_TRANSLATOR_ELEMENT_ID,
+      'langcode' => $langcode,
+      'languages' => implode(',', $active_languages),
+      'displayMode' => $display_mode ?: 'SIMPLE',
+    ],
   );
+  backdrop_add_js($settings, 'setting');
+  backdrop_add_js(backdrop_get_path('module', 'google_translator') . '/js/init.js', 'file', array('defer' => TRUE));
+  backdrop_add_css(backdrop_get_path('module', 'google_translator') . '/css/google_translator.css', 'file');
+  if ($config->get('add_disclaimer')) {
+    backdrop_add_js(backdrop_get_path('module', 'google_translator') . '/js/disclaimer.js', 'file', array('defer' => TRUE));
+  }
+}
+
+/**
+ *  Get active languages.
+ */
+function google_translator_get_active_languages() {
+  $active_languages = config_get('google_translator.settings', 'active_languages');
+  if (is_array($active_languages)) {
+    $active_languages = array_flip($active_languages);
+    if (isset($active_languages[0])) {
+      unset($active_languages[0]);
+    }
+  }
+  else {
+    $active_languages = [];
+  }
+  return $active_languages;
+}
+
+/**
+ *  Get available languages.
+ */
+function google_translator_get_available_languages() {
+  return [
+    'af' => 'Afrikaans',
+    'sq' => 'Albanian',
+    'am' => 'Amharic',
+    'ar' => 'Arabic',
+    'hy' => 'Armenian',
+    'az' => 'Azerbaijani',
+    'eu' => 'Basque',
+    'be' => 'Belarusian',
+    'bn' => 'Bengali',
+    'bs' => 'Bosnian',
+    'bg' => 'Bulgarian',
+    'ca' => 'Catalan',
+    'ny' => 'Chichewa',
+    'zh-CN' => 'Chinese (Simplified)',
+    'zh-TW' => 'Chinese (Traditional)',
+    'co' => 'Corsican',
+    'hr' => 'Croatian',
+    'cs' => 'Czech',
+    'da' => 'Danish',
+    'nl' => 'Dutch',
+    'en' => 'English',
+    'eo' => 'Esperanto',
+    'et' => 'Estonian',
+    'ee' => 'Ewe',
+    'tl' => 'Filipino',
+    'fi' => 'Finnish',
+    'fr' => 'French',
+    'fy' => 'Frisian',
+    'gl' => 'Galician',
+    'ka' => 'Georgian',
+    'de' => 'German',
+    'el' => 'Greek',
+    'gn' => 'Guarani',
+    'gu' => 'Gujarati',
+    'ht' => 'Haitian Creole',
+    'ha' => 'Hausa',
+    'haw' => 'Hawaiian',
+    'iw' => 'Hebrew',
+    'hi' => 'Hindi',
+    'hmn' => 'Hmong',
+    'hu' => 'Hungarian',
+    'is' => 'Icelandic',
+    'ig' => 'Igbo',
+    'id' => 'Indonesian',
+    'ga' => 'Irish',
+    'it' => 'Italian',
+    'ja' => 'Japanese',
+    'jw' => 'Javanese',
+    'kn' => 'Kannada',
+    'kk' => 'Kazakh',
+    'km' => 'Khmer',
+    'rw' => 'Kinyarwanda',
+    'ko' => 'Korean',
+    'kri' => 'Krio',
+    'ku' => 'Kurdish (Kurmanji)',
+    'ckb' => 'Kurdish (Soranî)',
+    'ky' => 'Kyrgyz',
+    'lo' => 'Lao',
+    'lv' => 'Latvian',
+    'ln' => 'Lingala',
+    'lt' => 'Lithuanian',
+    'lg' => 'Luganda',
+    'mk' => 'Macedonian',
+    'mg' => 'Malagasy',
+    'ms' => 'Malay',
+    'ml' => 'Malayalam',
+    'mt' => 'Maltese',
+    'mi' => 'Maori',
+    'mr' => 'Marathi',
+    'mn' => 'Mongolian',
+    'ne' => 'Nepali',
+    'no' => 'Norwegian',
+    'or' => 'Odia (Oriya)',
+    'om' => 'Oromo',
+    'ps' => 'Pashto',
+    'fa' => 'Persian',
+    'pl' => 'Polish',
+    'pt' => 'Portuguese',
+    'pa' => 'Punjabi',
+    'qu' => 'Quechua',
+    'ro' => 'Romanian',
+    'ru' => 'Russian',
+    'gd' => 'Scots Gaelic',
+    'sr' => 'Serbian',
+    'st' => 'Sesotho',
+    'sn' => 'Shona',
+    'sd' => 'Sindhi',
+    'si' => 'Sinhala',
+    'sk' => 'Slovak',
+    'sl' => 'Slovenian',
+    'so' => 'Somali',
+    'es' => 'Spanish',
+    'su' => 'Sundanese',
+    'sw' => 'Swahili',
+    'sv' => 'Swedish',
+    'tg' => 'Tajik',
+    'ta' => 'Tamil',
+    'tt' => 'Tatar',
+    'te' => 'Telugu',
+    'th' => 'Thai',
+    'ti' => 'Tigrinya',
+    'tr' => 'Turkish',
+    'tk' => 'Turkmen',
+    'ug' => 'Uyghur',
+    'uk' => 'Ukrainian',
+    'ur' => 'Urdu',
+    'uz' => 'Uzbek',
+    'vi' => 'Vietnamese',
+    'cy' => 'Welsh',
+    'xh' => 'Xhosa',
+    'yi' => 'Yiddish',
+    'yo' => 'Yoruba',
+    'zu' => 'Zulu',
+  ];
 }

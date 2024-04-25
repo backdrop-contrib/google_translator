@@ -1,0 +1,10 @@
+#google_translator_element a,
+#google_translator_element span,
+#google_translator_element div {
+  display: inline;
+  color: #333;
+}
+
+#google_translator_element img {
+  display: inline;
+}

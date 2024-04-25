@@ -1,6 +1,11 @@
+type = module
 name = Google Translator
 description = Provides a block with configurable languages to translate the current page into
-core = 7.x
-dependencies[] = libraries
+backdrop = 1.x
 project = "google_translator"
-configure = admin/config/system/google-translate
+configure = admin/config/regional/google-translate
+
+tags[] = Translation
+tags[] = Locale
+tags[] = Google
+tags[] = Language

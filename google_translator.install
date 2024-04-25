@@ -1,0 +1,21 @@
+<?php
+/**
+ * @file
+ */
+
+/**
+ * Convert variables to config and add defaults for new options.
+ * Implements hook_update_N().
+ */
+function hook_update_1000() {
+  $config = config('google_translator.settings');
+  $config->set('add_disclaimer', FALSE);
+  $config->set('disclaimer_title', 'Automatic translation disclaimer');
+  $config->set('disclaimer_text', update_variable_get('google_translator_disclaimer', 'Translation of this page is provided by the third-party Google Translate service. In case of dispute, the original language content should prevail.'));
+  $config->set('active_languages', update_variable_get('google_translator_active_languages', ["es" => "es"]));
+  $config->set('active_languages_display_mode', update_variable_get('google_translator_active_languages_display_mode', 'SIMPLE'));
+  $config->save();
+  update_variable_del('google_translator_disclaimer');
+  update_variable_del('google_translator_active_languages');
+  update_variable_del('google_translator_active_languages_display_mode');
+}

@@ -1,0 +1,10 @@
+{
+    "_config_name": "google_translator.settings",
+    "active_languages_display_mode": "SIMPLE",
+    "active_languages": {
+        "es": "es"
+    },
+    "add_disclaimer": false,
+    "disclaimer_title": "Automatic translation disclaimer",
+    "disclaimer_text": "Translation of this page is provided by the third-party Google Translate service. In case of dispute, the original language content should prevail."
+}

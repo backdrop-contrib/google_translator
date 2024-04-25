@@ -1,67 +1,39 @@
-Google Translator
-=================
+# Google Translator
 
-INTRODUCTION
-------------
+First, a caveat that automated translation is not perfect. Second, many browsers
+now support automated translation natively, so this module may be less
+necessary.
 
-This module brings the power of Google Website Translate into Drupal, providing
-an instant translated version of your site's text.
-Convert any menu link into a google translate switch, that, on click, will show
-a dropdown with configured language. This way we keep a lean user interface for
-those who do not need the translation option. Optionally you can add the 
-translate switch as a block instead. Provides an administration interface to
-allow users to activate languages, display modes and a disclaimer text.
-https://translate.google.com/manager/website/?hl=en
+That said, this module provides an instant translated version of your site's
+text via Google Website Translate. You can add the translate switch as a block.
+This module provides an administration interface to allow users to activate
+languages, display modes and a disclaimer text.
 
-* For a full description of the module, visit the project page:
-  https://www.drupal.org/project/google_translator
+## Installation and usage
 
-* To submit bug reports and feature suggestions, or to track changes:
-  https://www.drupal.org/project/issues/1473726
+- Install this module using the [official Backdrop CMS instructions](https://backdropcms.org/guide/modules)
+- The module can be configured at **admin/config/regional/google-translate**
+- A block is provided which can be placed on a layout to provide the translation interface.
+- Usage instructions can be [viewed and edited in the Wiki](https://github.com/backdrop-contrib/google_translator/wiki).
 
 
-REQUIREMENTS
-------------
+## Issues
 
-* Libraries module
-  https://www.drupal.org/project/libraries
-* jQuery.DOMNodeAppear library
-  - This version for jQuery 1.7+
-    https://github.com/liamdanger/jQuery.DOMNodeAppear
-  - This version for jQuery below 1.7
-    https://github.com/jennatollerson/jQuery.DOMNodeAppear/tree/for-old-jquery
+ - Bugs and Feature requests should be reported in the [Issue Queue](https://github.com/backdrop-contrib/google_translator/issues).
 
+## Current Maintainers
 
-INSTALLATION
-------------
+ - [Laryn Kragt Bakker](https://github.com/laryn).
+ - Collaboration and co-maintainers welcome!
 
-* Place this module in your site's contrib modules folder as usual.
-  For help with this step see: https://www.drupal.org/node/895232
-  
-* Download jQuery.DOMNodeAppear.
-  See notes above to identify the version compatible with your site's version
-  of jQuery.
-  
-* Locate your libraries directory. Usually:
-  /sites/all/libraries/
-  
-* Place the files in a new jquery.domnodeappear directory in the site's
-  libraries folder (/libraries), so the structure looks like:
-  - libraries/
-    - jquery.domnodeappear/
-      - jquery.domnodeappear.js
-      - README.md
-  
-* Enable Google Translator in your site's modules admin.
+## Credits
 
-CONFIGURATION & USAGE
----------------------
+ - Ported to Backdrop CMS by [Laryn Kragt Bakker](https://github.com/laryn).
+ - Support has been provided by [Aten Design Group](https://aten.io).
+ - Maintained for Drupal by [Jenna Tollerson](https://www.drupal.org/u/jennatollerson),
+   and [Felix Silberstein](https://www.drupal.org/u/fxarte).
 
-* To configure, go to: /admin/config/system/google-translate
+ ## License
 
-* To use in a menu:
-  - Add a new link to any menu
-  - Add any text to the title, i.e. Translate
-  - Add this placeholder to the path: `<google-translate>`
-  
-* To use as a block, add the Google Translator language selector to any region.
+This project is GPL v2 software. See the LICENSE.txt file in this directory for
+complete text.
