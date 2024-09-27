@@ -8,6 +8,17 @@ define('GOOGLE_TRANSLATOR_DISCLAIMER_CLASS', 'google-translator-switch');
 define('GOOGLE_TRANSLATOR_ELEMENT_ID', 'google_translator_element');
 
 /**
+ * Implements hook_config_info().
+ */
+function google_translator_config_info() {
+  $prefixes['google_translator.settings'] = array(
+    'label' => t('Google Translator'),
+    'group' => t('Configuration'),
+  );
+  return $prefixes;
+}
+
+/**
  * Implements hook_menu().
  */
 function google_translator_menu() {
